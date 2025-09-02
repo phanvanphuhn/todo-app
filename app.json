@@ -24,6 +24,10 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "scheme": "todo-app",
+    "plugins": [
+      "expo-router"
+    ]
   }
 }
