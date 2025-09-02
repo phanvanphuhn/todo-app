@@ -4,21 +4,63 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { useState } from "react";
+import { useAuthStore } from "../../stores/authStore";
 
 export default function AuthScreen() {
+  const { authMode, setAuthMode, signIn, signUp } = useAuthStore();
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [verifyPassword, setVerifyPassword] = useState("");
 
-  const handleSignIn = () => {
-    // Here you can add authentication logic later
-    router.push("/(app)/homeScreen");
+  const handleAuth = () => {
+    if (authMode === "signin") {
+      const success = signIn(username.trim(), password.trim());
+      if (success) {
+        router.push("/(app)/homeScreen");
+      } else {
+        Alert.alert("Sign In Failed", "Invalid username or password");
+      }
+    } else {
+      const success = signUp(
+        username.trim(),
+        password.trim(),
+        verifyPassword.trim()
+      );
+      if (success) {
+        // Keep username and password filled for immediate sign in
+        setVerifyPassword(""); // Only clear verify password
+        setAuthMode("signin");
+        Alert.alert(
+          "Success",
+          "Account created successfully! You can now sign in."
+        );
+      } else {
+        Alert.alert(
+          "Sign Up Failed",
+          "Username already exists or validation failed. Please try again."
+        );
+      }
+    }
+  };
+
+  const toggleAuthMode = () => {
+    setAuthMode(authMode === "signin" ? "signup" : "signin");
+    setUsername("");
+    setPassword("");
+    setVerifyPassword("");
   };
 
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>
+        {authMode === "signin" ? "Sign In" : "Sign Up"}
+      </Text>
+
       <View style={styles.form}>
         <TextInput
           style={styles.input}
@@ -37,8 +79,29 @@ export default function AuthScreen() {
           autoCapitalize="none"
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleSignIn}>
-          <Text style={styles.buttonText}>Sign In</Text>
+        {authMode === "signup" && (
+          <TextInput
+            style={styles.input}
+            placeholder="Verify Password"
+            value={verifyPassword}
+            onChangeText={setVerifyPassword}
+            secureTextEntry
+            autoCapitalize="none"
+          />
+        )}
+
+        <TouchableOpacity style={styles.button} onPress={handleAuth}>
+          <Text style={styles.buttonText}>
+            {authMode === "signin" ? "Sign In" : "Sign Up"}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.toggleButton} onPress={toggleAuthMode}>
+          <Text style={styles.toggleText}>
+            {authMode === "signin"
+              ? "Don't have an account? Sign Up"
+              : "Already have an account? Sign In"}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -54,9 +117,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
     marginBottom: 40,
+    color: "#333",
   },
   form: {
     width: "100%",
@@ -82,5 +146,14 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  toggleButton: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  toggleText: {
+    color: "#007AFF",
+    fontSize: 14,
+    textDecorationLine: "underline",
   },
 });
