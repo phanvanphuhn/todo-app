@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 interface User {
   username: string;
   password: string;
+  avatar?: string;
 }
 
 interface AuthState {
@@ -18,6 +19,7 @@ interface AuthState {
   signUp: (username: string, password: string, verifyPassword: string) => boolean;
   signIn: (username: string, password: string) => boolean;
   signOut: () => void;
+  updateAvatar: (avatarUri: string) => void;
   
   // Validation
   validateSignUp: (username: string, password: string, verifyPassword: string) => { isValid: boolean; errors: string[] };
@@ -86,6 +88,20 @@ export const useAuthStore = create<AuthState>()(
       signOut: () => set({ 
         currentUser: null 
       }),
+
+      // Update avatar functionality
+      updateAvatar: (avatarUri) => {
+        const currentUser = get().currentUser;
+        if (currentUser) {
+          const updatedUser = { ...currentUser, avatar: avatarUri };
+          set((state) => ({
+            currentUser: updatedUser,
+            users: state.users.map(user => 
+              user.username === currentUser.username ? updatedUser : user
+            )
+          }));
+        }
+      },
 
       // Validation for sign up
       validateSignUp: (username, password, verifyPassword) => {
